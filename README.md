@@ -1,42 +1,98 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+## 3×3 Convolution Engine (inspired by Exercise 08, VLSI 1)
+A compact, fully synchronous 3×3 Gaussian convolution engine designed for Tiny Tapeout.
+The module loads nine 8‑bit pixels serially via `ui_in`, performs a fixed‑coefficient Gaussian convolution, and outputs the filtered 8‑bit result on `uo_out`.
 
-- [Read the documentation for project](docs/info.md)
+## Architecture Overview
+- Pixel Loader:
+  Serial acquisition of nine 8‑bit pixels into an internal buffer pix[0..8].
+- Run‑Pulse Generator:
+  Produces a single‑cycle run pulse when the host closes the load window.
+- Convolution Core: 
+  - Nine‑cycle multiply–accumulate pipeline
+  - 8‑bit Gaussian kernel coefficients
+  - 20‑bit accumulator
+  - Saturated 8‑bit output
+- Output Stage:
+  The filtered pixel appears on `uo_out`.
+  A one‑cycle "done" pulse is returned on `uio_out`.
 
-## What is Tiny Tapeout?
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+## Verification
+Verification is performed using Cocotb:
+- Randomized 3×3 pixel blocks
+- Python golden model
+- RTL vs. golden comparison
+- Deterministic PASS/FAIL
+- FST waveform dump for GTKWave
 
-To learn more and get started, visit https://tinytapeout.com.
+### Example output:
+Random image = [36, 25, 85, 20, 112, 118, 7, 115, 24]
+Golden result = 72
+RTL result    = 72
+Cocotb test PASSED
 
-## Set up your Verilog project
+## I/O Interface
+| Signal       | Direction | Width | Description                                      |
+|--------------|-----------|-------|--------------------------------------------------|
+| clk          | in        | 1     | System clock                                     |
+| rst_n        | in        | 1     | Asynchronous reset, active low                   |
+| ui_in        | in        | [7:0] | Pixel data input during load window              |
+| uo_out       | out       | [7:0] | 8‑bit convolution result                         |
+| uio_in       | in        | [7:0] | Host control: 0x01=open load window, 0x00=close |
+| uio_out      | out       | [7:0] | Status: 0x01=MAC done, 0x00=busy                 |
+| uio_oe       | out       | [7:0] | Output enable for uio_out (always 0xFF)          |
+| ena          | in        | 1     | Unused (Tiny Tapeout enable)                     |
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+## Simulation and Waveforms
+Run the Cocotb testbench:
+```sh
+cd test
+make -B
+```
+Open the waveform:
+```sh
+gtkwave tb.fst waves/tt_um_ex08_conv3x3.gtkw
+```
+The GTKWave layout highlights loader state, pixel registers, MAC pipeline, and output timing.
 
-## Enable GitHub actions to build the results page
+## Synthesis and Layout
+The design was hardened using LibreLane:
+- No setup or hold violations
+- No slew or capacitance violations
+- One non‑critical fanout warning in the clock tree
+- Final GDS successfully generated
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+## Repository Structure
+- src/ — RTL (top module, loader, convolution core)
+- test/ — Cocotb testbench and golden model
+- docs/ — Project documentation
+- info.yaml — Tiny Tapeout metadata
 
-## Resources
+## Submission
+The project is fully verified and ready for submission to the Tiny Tapeout shuttle:
+https://app.tinytapeout.com/
 
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+## Physical Signoff Summary
 
-## What next?
+The design was hardened using OpenLane (Sky130 HD).  
+All signoff checks passed:
 
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+- **Standard cells:** 543  
+- **Core utilization:** 53%  
+- **Die area:** 0.017 mm²  
+- **Critical path:** 5.87 ns (meets 20 ns clock with large margin)  
+- **Setup violations:** 0  
+- **Hold violations:** 0  
+- **DRC violations:** 0  
+- **Antenna violations:** 0  
+- **ERC:** clean  
+- **Routing:** no shorts, no spacing errors  
+- **Fanout:** one non‑critical warning on the clock net (expected for TT)  
+- **Power (typical):** ~1.3 nW total  
+- **Final GDS:** generated successfully
+
+## Author
+Cyrill Rüttimann

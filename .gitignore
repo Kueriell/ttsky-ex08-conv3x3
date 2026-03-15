@@ -1,13 +1,41 @@
+# macOS
 .DS_Store
-.idea
+
+# IDEs
+.idea/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Cocotb build
+test/sim_build/
+test/__pycache__/
+test/results.xml
+*.log
+*.o
+*.so
+
+# Simulation outputs
+sim
+sim.out
+sim_rand.out
+tb
+tb_rand_tmp.v
+
+# Waveforms
 *.vcd
 *.fst
 *.fst.hier
-runs
-tt_submission
+
+# OpenLane / LibreLane
+runs/
+tt_submission/
 src/user_config.json
 src/config_merged.json
-test/sim_build
-test/__pycache__/
-test/results.xml
 test/gate_level_netlist.v
+
+# Editor junk
+*.swp
+*.swo
