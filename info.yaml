@@ -2,7 +2,7 @@
 project:
   title:        "3x3 Gaussian Convolution Engine"
   author:       "Cyrill Rüttimann"
-  discord:      ""
+  discord:      "kueriell"
   description:  "A compact 1-channel 3x3 Gaussian convolution kernel inspired by Exercise 08 (VLSI 1)."
   language:     "Verilog"
   clock_hz:     50000000
